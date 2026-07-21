@@ -1,107 +1,77 @@
 'use client';
+
 import { useState } from 'react';
-import { Sparkles, Image as ImageIcon, Zap } from 'lucide-react';
 
 export default function Home() {
-  const [prompt, setPrompt] = useState('');
+  const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<string | null>(null);
 
-  const handleGenerate = async () => {
-    if (!prompt) return alert('Lütfen ürün için bir konsept veya açıklama girin!');
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAnalyze = async () => {
+    if (!image) return;
     setLoading(true);
+    setResult(null);
+
     try {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ image }),
       });
       const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setResult(data.data);
-    } catch (err: any) {
-      alert(err.message || 'Bir hata oluştu!');
+      setResult(data.text || 'Açıklama üretilemedi.');
+    } catch (error) {
+      setResult('Bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white p-6 flex flex-col items-center">
-      {/* Header */}
-      <header className="w-full max-w-4xl flex justify-between items-center py-6 border-b border-slate-800">
-        <div className="flex items-center gap-2">
-          <Zap className="text-indigo-500 w-8 h-8" />
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-            ShopStudio AI
-          </h1>
-        </div>
-        <div className="bg-slate-900 border border-slate-800 px-4 py-2 rounded-full flex items-center gap-2 text-sm">
-          <Sparkles className="w-4 h-4 text-amber-400" />
-          <span>Kredi: <strong>5 Ücretsiz</strong></span>
-        </div>
-      </header>
+    <main className="min-h-screen p-6 max-w-4xl mx-auto flex flex-col items-center justify-center">
+      <h1 className="text-3xl font-bold mb-2 text-center text-indigo-400">ShopStudio AI</h1>
+      <p className="text-slate-400 mb-8 text-center">E-Ticaret Görsel Analizi & SEO İçerik Üreticisi</p>
 
-      {/* Hero Section */}
-      <div className="max-w-4xl w-full mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Sol Kolon: Girdi Alanı */}
-        <div className="flex flex-col gap-4">
-          <h2 className="text-xl font-semibold">Ürün Stüdyonuzu Oluşturun</h2>
-          <p className="text-slate-400 text-sm">
-            Ürününüzü tanımlayın; yapay zeka saniyeler içinde stüdyo arka planı, SEO başlığı ve açıklamasını üretsin.
-          </p>
-
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Örn: Siyah oversized erkek hoodie, minimalist stüdyo ışığı, mermer zemin..."
-            className="w-full h-32 p-4 rounded-xl bg-slate-900 border border-slate-800 focus:border-indigo-500 outline-none text-sm resize-none"
+      <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+        <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-700 rounded-xl p-6 hover:border-indigo-500 transition-colors cursor-pointer bg-slate-950/50">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer"
           />
-
-          <button
-            onClick={handleGenerate}
-            disabled={loading}
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 rounded-xl font-medium transition flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <span>Yapay Zeka Çalışıyor...</span>
-            ) : (
-              <>
-                <Sparkles className="w-5 h-5" />
-                <span>Stüdyo Görseli & SEO Üret ($0)</span>
-              </>
-            )}
-          </button>
         </div>
 
-        {/* Sağ Kolon: Sonuç Alanı */}
-        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 flex flex-col justify-center items-center min-h-[350px]">
-          {result ? (
-            <div className="w-full space-y-4">
-              <img
-                src={result.imageUrl}
-                alt="Üretilen Ürün"
-                className="w-full h-64 object-cover rounded-xl border border-slate-800"
-              />
-              <div className="space-y-2">
-                <h3 className="font-bold text-indigo-300">{result.title}</h3>
-                <p className="text-xs text-slate-400 line-clamp-3">{result.description}</p>
-                <div className="flex flex-wrap gap-1">
-                  {result.tags?.map((tag: string, i: number) => (
-                    <span key={i} className="text-[10px] bg-slate-800 text-slate-300 px-2 py-1 rounded">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center text-slate-500 space-y-2">
-              <ImageIcon className="w-12 h-12 mx-auto opacity-40" />
-              <p className="text-sm">Sonuç burada görünecek</p>
-            </div>
-          )}
-        </div>
+        {image && (
+          <div className="flex flex-col items-center space-y-4">
+            <img src={image} alt="Yüklenen Ürün" className="max-h-64 rounded-lg object-contain border border-slate-800" />
+            <button
+              onClick={handleAnalyze}
+              disabled={loading}
+              className="w-full bg-indigo-600 hover:bg-indigo-500 font-semibold py-3 px-6 rounded-xl transition-all disabled:opacity-50"
+            >
+              {loading ? 'Yapay Zeka Görseli İnceliyor...' : '✨ Ürün İçin SEO Metinleri Üret'}
+            </button>
+          </div>
+        )}
+
+        {result && (
+          <div className="mt-6 p-4 bg-slate-950 border border-slate-800 rounded-xl">
+            <h2 className="text-lg font-semibold text-indigo-400 mb-2">Yapay Zeka Analiz Sonucu:</h2>
+            <p className="whitespace-pre-line text-slate-200 leading-relaxed">{result}</p>
+          </div>
+        )}
       </div>
     </main>
   );
