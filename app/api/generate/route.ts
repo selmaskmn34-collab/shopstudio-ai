@@ -5,8 +5,8 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const prompt = body?.prompt || "Profesyonel Ürün";
 
-    // 🔑 API Key tek satırda birleştirildi:
-    const GEMINI_API_KEY = "AQ.Ab8RN6KnMKiNp2bGS2NIj9xYk3np6deMaIOXtW7m1RpdUq_4HQ";
+    // 🔑 Not Defteri'ne kaydettiğin API Anahtarını iki tırnak arasına yapıştır:
+    const GEMINI_API_KEY = "BURAYA_AQ_ILE_BASLAYAN_ANAHTARI_YAPISTIR";
 
     // Varsayılan Güvenli SEO İçeriği (Yapay zeka yanıt vermezse devreye girer)
     let seoContent = {
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     };
 
     // 1. Google Gemini API İle Metin Üretimi
-    if (GEMINI_API_KEY) {
+    if (GEMINI_API_KEY && GEMINI_API_KEY !== "BURAYA_AQ_ILE_BASLAYAN_ANAHTARI_YAPISTIR") {
       try {
         const geminiRes = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
           seoContent = JSON.parse(cleanJson);
         }
       } catch (e) {
-        console.log("Gemini fallback kullanıldı.");
+        console.log("Gemini API çağrısında bir sorun oluştu, yedek metin kullanıldı.");
       }
     }
 
