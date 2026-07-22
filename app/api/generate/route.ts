@@ -6,7 +6,7 @@ export async function POST(req: Request) {
     const prompt = body?.prompt || "Profesyonel Ürün";
 
     // 🔑 Not Defteri'ne kaydettiğin API Anahtarını iki tırnak arasına yapıştır:
-    const GEMINI_API_KEY = "BURAYA_AQ_ILE_BASLAYAN_ANAHTARI_YAPISTIR";
+    const GEMINI_API_KEY = "AQ.Ab8RN6KremX15rSt0eXDSoymFExBBoGFEkCONC7qHBavU339cg";
 
     // Varsayılan Güvenli SEO İçeriği (Yapay zeka yanıt vermezse devreye girer)
     let seoContent = {
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     };
 
     // 1. Google Gemini API İle Metin Üretimi
-    if (GEMINI_API_KEY && GEMINI_API_KEY !== "BURAYA_AQ_ILE_BASLAYAN_ANAHTARI_YAPISTIR") {
+    if (GEMINI_API_KEY && GEMINI_API_KEY !== "AQ.Ab8RN6KremX15rSt0eXDSoymFExBBoGFEkCONC7qHBavU339cg") {
       try {
         const geminiRes = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
