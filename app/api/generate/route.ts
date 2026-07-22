@@ -5,8 +5,8 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const prompt = body?.prompt || "Profesyonel Ürün";
 
-    // 🔑 Not Defteri'ne kaydettiğin API Anahtarını iki tırnak arasına yapıştır:
-    const GEMINI_API_KEY = "BURAYA_AQ_ILE_BASLAYAN_ANAHTARI_YAPISTIR";
+    // 🔑 Not Defteri'ndeki "AQ..." ile başlayan yeni Auth API anahtarın:
+    const GEMINI_API_KEY = "AQ.Ab8RN6IAQZHJpEL4NQRxDEsV7EGHORPBZGM10pO92nz7LuxmRQ";
 
     let seoContent = {
       title: `${prompt} - Özel Tasarım Premium Ürün`,
@@ -14,35 +14,44 @@ export async function POST(req: Request) {
       tags: ["ecommerce", "studio", "ai", "trend", "fashion"]
     };
 
-    if (GEMINI_API_KEY && GEMINI_API_KEY !== "BURAYA_AQ_ILE_BASLAYAN_ANAHTARI_YAPISTIR") {
+    if (GEMINI_API_KEY && GEMINI_API_KEY !== "AQ.Ab8RN6IAQZHJpEL4NQRxDEsV7EGHORPBZGM10pO92nz7LuxmRQ") {
       try {
         const geminiRes = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
           {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'x-goog-api-key': GEMINI_API_KEY
+            },
             body: JSON.stringify({
               contents: [{
                 parts: [{
-                  text: `Bu e-ticaret ürünü için Etsy/Amazon uyumlu Türkçe profesyonel başlık, detaylı açıklama ve 5 etiket üret. Konsept: "${prompt}". Sadece şu formatta geçerli bir JSON döndür: {"title": "...", "description": "...", "tags": ["tag1", "tag2"]}`
+                  text: `Bu e-ticaret ürünü için Etsy/Amazon uyumlu Türkçe profesyonel başlık, detaylı açıklama ve 5 etiket üret. Konsept: "${prompt}". Sadece geçerli bir JSON objesi döndür: {"title": "...", "description": "...", "tags": ["tag1", "tag2"]}`
                 }]
-              }]
+              }],
+              generationConfig: {
+                responseMimeType: "application/json"
+              }
             })
           }
         );
 
         const geminiData = await geminiRes.json();
 
-        // 🚨 Google bir hata döndürürse hatayı doğrudan sitede açıklama kısmına yazdırıyoruz:
         if (geminiData?.error) {
-          seoContent.description = `Google Gemini Hatası: ${geminiData.error.message || 'API Anahtarı Geçersiz'}`;
+          seoContent.description = `Google Mesajı: ${geminiData.error.message}`;
         } else if (geminiData?.candidates?.[0]?.content?.parts?.[0]?.text) {
           const rawText = geminiData.candidates[0].content.parts[0].text;
-          const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-          seoContent = JSON.parse(cleanJson);
+          const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            seoContent = JSON.parse(jsonMatch[0]);
+          }
+        } else {
+          seoContent.description = `Yanıt Formattı Uymadı: ${JSON.stringify(geminiData)}`;
         }
       } catch (e: any) {
-        seoContent.description = `Bağlantı Hatası: ${e?.message || 'İstek gönderilemedi'}`;
+        seoContent.description = `Bağlantı Hatası: ${e?.message || 'Sunucuya ulaşılamadı'}`;
       }
     }
 
