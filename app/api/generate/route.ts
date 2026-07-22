@@ -5,7 +5,7 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const prompt = body?.prompt || "Profesyonel Ürün";
 
-    // 🔑 Not Defteri'ndeki "AQ..." ile başlayan yeni Auth API anahtarın:
+    // 🔑 ANAHTARINI SADECE BURADAKİ TIRNAKLARIN ARASINA YAPIŞTIR (BAŞKA YERE YAZMA):
     const GEMINI_API_KEY = "AQ.Ab8RN6IAQZHJpEL4NQRxDEsV7EGHORPBZGM10pO92nz7LuxmRQ";
 
     let seoContent = {
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
       tags: ["ecommerce", "studio", "ai", "trend", "fashion"]
     };
 
-    if (GEMINI_API_KEY && GEMINI_API_KEY !== "AQ.Ab8RN6IAQZHJpEL4NQRxDEsV7EGHORPBZGM10pO92nz7LuxmRQ") {
+    if (GEMINI_API_KEY) {
       try {
         const geminiRes = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
             seoContent = JSON.parse(jsonMatch[0]);
           }
         } else {
-          seoContent.description = `Yanıt Formattı Uymadı: ${JSON.stringify(geminiData)}`;
+          seoContent.description = `Yanıt Formatı Uymadı: ${JSON.stringify(geminiData)}`;
         }
       } catch (e: any) {
         seoContent.description = `Bağlantı Hatası: ${e?.message || 'Sunucuya ulaşılamadı'}`;
