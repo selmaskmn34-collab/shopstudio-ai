@@ -6,17 +6,15 @@ export async function POST(req: Request) {
     const prompt = body?.prompt || "Profesyonel Ürün";
 
     // 🔑 Not Defteri'ne kaydettiğin API Anahtarını iki tırnak arasına yapıştır:
-    const GEMINI_API_KEY = "AQ.Ab8RN6KremX15rSt0eXDSoymFExBBoGFEkCONC7qHBavU339cg";
+    const GEMINI_API_KEY = "BURAYA_AQ_ILE_BASLAYAN_ANAHTARI_YAPISTIR";
 
-    // Varsayılan Güvenli SEO İçeriği (Yapay zeka yanıt vermezse devreye girer)
     let seoContent = {
       title: `${prompt} - Özel Tasarım Premium Ürün`,
       description: `${prompt} için profesyonel e-ticaret stüdyo çekimi. Yüksek kaliteli malzeme ve modern tasarım.`,
       tags: ["ecommerce", "studio", "ai", "trend", "fashion"]
     };
 
-    // 1. Google Gemini API İle Metin Üretimi
-    if (GEMINI_API_KEY && GEMINI_API_KEY !== "AQ.Ab8RN6KremX15rSt0eXDSoymFExBBoGFEkCONC7qHBavU339cg") {
+    if (GEMINI_API_KEY && GEMINI_API_KEY !== "BURAYA_AQ_ILE_BASLAYAN_ANAHTARI_YAPISTIR") {
       try {
         const geminiRes = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
@@ -35,17 +33,19 @@ export async function POST(req: Request) {
 
         const geminiData = await geminiRes.json();
 
-        if (geminiData?.candidates?.[0]?.content?.parts?.[0]?.text) {
+        // 🚨 Google bir hata döndürürse hatayı doğrudan sitede açıklama kısmına yazdırıyoruz:
+        if (geminiData?.error) {
+          seoContent.description = `Google Gemini Hatası: ${geminiData.error.message || 'API Anahtarı Geçersiz'}`;
+        } else if (geminiData?.candidates?.[0]?.content?.parts?.[0]?.text) {
           const rawText = geminiData.candidates[0].content.parts[0].text;
           const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
           seoContent = JSON.parse(cleanJson);
         }
-      } catch (e) {
-        console.log("Gemini API çağrısında bir sorun oluştu, yedek metin kullanıldı.");
+      } catch (e: any) {
+        seoContent.description = `Bağlantı Hatası: ${e?.message || 'İstek gönderilemedi'}`;
       }
     }
 
-    // 2. Stüdyo Görseli Oluşturma (Pollinations AI)
     const encodedPrompt = encodeURIComponent(`Professional commercial product photography, studio setup, ${prompt}, 4k ultra detailed`);
     const generatedImageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true`;
 
