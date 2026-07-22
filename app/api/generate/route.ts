@@ -5,8 +5,8 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const prompt = body?.prompt || "Profesyonel Ürün";
 
-    // 🔑 API Key tek satırda birleştirildi (Enter boşlukları silindi):
-    const GEMINI_API_KEY = "AQ.Ab8RN6KnMKiNp2bGS2NIj9xY" + "k3np6deMaIOXtW7m1RpdUq_4HQ";
+    // 🔑 API Key tek satırda birleştirildi:
+    const GEMINI_API_KEY = "AQ.Ab8RN6KnMKiNp2bGS2NIj9xYk3np6deMaIOXtW7m1RpdUq_4HQ";
 
     // Varsayılan Güvenli SEO İçeriği (Yapay zeka yanıt vermezse devreye girer)
     let seoContent = {
