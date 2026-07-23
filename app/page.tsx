@@ -1,78 +1,128 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
+
+// TypeScript için kesin veri tipi tanımı (Derleme hatasını engeller)
+interface ResultData {
+  title: string;
+  description: string;
+  tags: string[];
+  imageUrl?: string;
+}
 
 export default function Home() {
-  const [image, setImage] = useState<string | null>(null);
+  const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+  const [result, setResult] = useState<ResultData | null>(null);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleAnalyze = async () => {
-    if (!image) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
     setResult(null);
+    setErrorMsg('');
 
     try {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image }),
+        body: JSON.stringify({ prompt: prompt || 'Özel Tasarım Ürün' }),
       });
+
       const data = await res.json();
-      setResult(data.text || 'Açıklama üretilemedi.');
-    } catch (error) {
-      setResult('Bir hata oluştu. Lütfen tekrar deneyin.');
+
+      if (data && (data.success || data.description || data.text)) {
+        const uretilenMetin = data.description || data.text || data.content || data.result || 'Açıklama üretildi.';
+        setResult({
+          title: data.title || data.data?.title || 'Özel Tasarım Ürün',
+          description: uretilenMetin,
+          tags: data.tags || data.data?.tags || ['giyim', 'moda', 'trend'],
+          imageUrl: data.imageUrl || data.data?.imageUrl,
+        });
+      } else {
+        setErrorMsg('Sunucu yanıt verdi ancak veri işlenemedi.');
+      }
+    } catch (err) {
+      setErrorMsg('Bağlantı Hatası: İstek gönderilemedi.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen p-6 max-w-4xl mx-auto flex flex-col items-center justify-center">
-      <h1 className="text-3xl font-bold mb-2 text-center text-indigo-400">ShopStudio AI</h1>
-      <p className="text-slate-400 mb-8 text-center">E-Ticaret Görsel Analizi & SEO İçerik Üreticisi</p>
+    <main style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', fontFamily: 'sans-serif' }}>
+      <h1>ShopStudio AI - Stüdyo & SEO Üretici</h1>
 
-      <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-        <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-700 rounded-xl p-6 hover:border-indigo-500 transition-colors cursor-pointer bg-slate-950/50">
+      <form onSubmit={handleSubmit} style={{ marginBottom: '2rem' }}>
+        <div style={{ marginBottom: '1rem' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+            Ürün Adı veya Konsept:
+          </label>
           <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            className="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer"
+            type="text"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="Örn: 2 iplik şardonlu renkli leopar desen sweatshirt"
+            style={{ width: '100%', padding: '0.75rem', fontSize: '1rem', borderRadius: '4px', border: '1px solid #ccc' }}
           />
         </div>
 
-        {image && (
-          <div className="flex flex-col items-center space-y-4">
-            <img src={image} alt="Yüklenen Ürün" className="max-h-64 rounded-lg object-contain border border-slate-800" />
-            <button
-              onClick={handleAnalyze}
-              disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-500 font-semibold py-3 px-6 rounded-xl transition-all disabled:opacity-50"
-            >
-              {loading ? 'Yapay Zeka Görseli İnceliyor...' : '✨ Ürün İçin SEO Metinleri Üret'}
-            </button>
-          </div>
-        )}
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            padding: '0.75rem 1.5rem',
+            fontSize: '1rem',
+            backgroundColor: '#0070f3',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          {loading ? '✨ Yapay Zeka Üretiyor...' : '✨ Stüdyo Görseli & SEO Üret'}
+        </button>
+      </form>
 
-        {result && (
-          <div className="mt-6 p-4 bg-slate-950 border border-slate-800 rounded-xl">
-            <h2 className="text-lg font-semibold text-indigo-400 mb-2">Yapay Zeka Analiz Sonucu:</h2>
-            <p className="whitespace-pre-line text-slate-200 leading-relaxed">{result}</p>
-          </div>
-        )}
-      </div>
+      {errorMsg && (
+        <div style={{ padding: '1rem', backgroundColor: '#ffebee', color: '#c62828', borderRadius: '4px', marginBottom: '1rem' }}>
+          {errorMsg}
+        </div>
+      )}
+
+      {result && (
+        <div style={{ border: '1px solid #ccc', padding: '1.5rem', borderRadius: '8px', background: '#fafafa' }}>
+          <h2>{result.title}</h2>
+          <p style={{ marginTop: '1rem', lineHeight: '1.6' }}><strong>Açıklama:</strong> {result.description}</p>
+          
+          {result.tags && result.tags.length > 0 && (
+            <div style={{ margin: '1rem 0' }}>
+              <strong>Etiketler:</strong>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                {result.tags.map((tag: string, idx: number) => (
+                  <span key={idx} style={{ background: '#e0e0e0', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.85rem' }}>
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {result.imageUrl && (
+            <div style={{ marginTop: '1.5rem' }}>
+              <strong>Üretilen Stüdyo Görseli:</strong>
+              <div style={{ marginTop: '0.5rem' }}>
+                <img
+                  src={result.imageUrl}
+                  alt="Üretilen Görsel"
+                  style={{ width: '100%', maxHeight: '450px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #ddd' }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </main>
   );
 }
