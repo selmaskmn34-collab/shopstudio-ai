@@ -3,9 +3,8 @@ import { NextResponse } from 'next/server';
 export async function POST(req: Request) {
   try {
     let cleanPrompt = "Özel Tasarım Ürün";
-
-    // 1. Gelen veriyi (Dosya veya Metin) güvenle ayıkla
     const contentType = req.headers.get('content-type') || '';
+
     try {
       if (contentType.includes('multipart/form-data')) {
         const formData = await req.formData();
@@ -22,11 +21,10 @@ export async function POST(req: Request) {
         const raw = body?.prompt || body?.text || body?.description || body?.concept || body?.name;
         if (raw && typeof raw === 'string') cleanPrompt = raw;
       }
-    } catch (e) {
+    } catch {
       console.log("Veri okuma esnek modda devam ediyor.");
     }
 
-    // Dosya uzantılarını temizle (.png, .jpg, .jpeg vb.)
     cleanPrompt = String(cleanPrompt)
       .replace(/\.(png|jpg|jpeg|webp|gif|svg)$/gi, '')
       .replace(/[-_]/g, ' ')
@@ -36,18 +34,15 @@ export async function POST(req: Request) {
       cleanPrompt = "Sokak Stili Sweatshirt";
     }
 
-    // 2. HER KOŞULDA ÇALIŞAN GARANTİLİ AKILLI İÇERİK (Sıfır Hata Garantisi)
     const capitalized = cleanPrompt.charAt(0).toUpperCase() + cleanPrompt.slice(1);
     let title = `${capitalized} | Özel Tasarım & Premium Kalite`;
-    let description = `${capitalized} modeli, yüksek kaliteli kumaş yapısı ve modern tasarım detaylarıyla öne çıkar. Günlük kullanım ve sokak stili için ideal olan bu ürün, uzun ömürlü ve konforlu bir deneyim sunar. E-ticaret stüdyo çekim standartlarına uygun olarak tasarlanmış ve listelenmiştir.`;
+    let description = `${capitalized} modeli, yüksek kaliteli kumaş yapısı ve modern tasarım detaylarıyla öne çıkar. Günlük kullanım ve sokak stili için ideal olan bu ürün, konforlu bir deneyim sunar. E-ticaret stüdyo çekim standartlarına uygun olarak tasarlanmış ve listelenmiştir.`;
     
     const words = cleanPrompt.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-    let tags = Array.from(new Set([...words, "sokakstili", "moda", "trend", "tasarim", "giyim", "kombin"])).slice(0, 7);
+    const tags = Array.from(new Set([...words, "sokakstili", "moda", "trend", "tasarim", "giyim", "kombin"])).slice(0, 7);
 
-    // 3. API ANAHTARI GEREKTİRMEYEN ÜCRETSİZ YAPAY ZEKA DESTEĞİ
-    // Google API anahtarıyla uğraşmadan doğrudan ücretsiz AI servisini tetikler
     try {
-      const aiPrompt = encodeURIComponent(`E-ticaret için "${cleanPrompt}" ürününe profesyonel Türkçe SEO başlığı, 2 cümlelik çekici bir satış açıklaması ve 5 etiket yaz. Format şu olsun -> Başlık: [başlık] Açıklama: [açıklama] Etiketler: [etiketler]`);
+      const aiPrompt = encodeURIComponent(`E-ticaret için "${cleanPrompt}" ürününe profesyonel Türkçe SEO başlığı ve 2 cümlelik çekici bir açıklama yaz. Format: Başlık: [başlık] Açıklama: [açıklama]`);
       const aiRes = await fetch(`https://text.pollinations.ai/${aiPrompt}`, {
         method: 'GET',
         headers: { 'Cache-Control': 'no-cache' }
@@ -66,15 +61,13 @@ export async function POST(req: Request) {
           }
         }
       }
-    } catch (e) {
+    } catch {
       console.log("Dış AI servisi yanıt vermedi, yerel akıllı içerik devreye alındı.");
     }
 
-    // 4. Stüdyo Görseli Üretimi
     const encodedPrompt = encodeURIComponent(`Professional commercial product photography, studio setup, ${cleanPrompt}, 4k ultra detailed, studio lighting`);
     const generatedImageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true`;
 
-    // 5. ÖN YÜZÜN ASLA BOŞ DÖNMEMESİ İÇİN TÜM OLASILIKLARI PAKETLE
     return NextResponse.json({
       success: true,
       title,
@@ -92,8 +85,7 @@ export async function POST(req: Request) {
       }
     }, { status: 200 });
 
-  } catch (error) {
-    // Sunucuda en ufak bir aksaklık olsa dahi asla hata mesajı gösterme:
+  } catch {
     return NextResponse.json({
       success: true,
       title: "Özel Tasarım Ürün - Yeni Sezon",
@@ -102,8 +94,8 @@ export async function POST(req: Request) {
       imageUrl: "https://image.pollinations.ai/prompt/professional%20product%20photography%20studio?width=1024&height=1024&nologo=true",
       data: {
         title: "Özel Tasarım Ürün - Yeni Sezon",
-        description: "Yüksek kaliteli malzemeden üretilmiş, modern tasarım detaylarına sahip trend e-ticaret ürünü.",
-        tags: ["moda", "trend", "giyim", "tasarim", "style"],
+        description: "Yüksek kaliteli e-ticaret ürünü.",
+        tags: ["moda", "trend", "giyim"],
         imageUrl: "https://image.pollinations.ai/prompt/professional%20product%20photography%20studio?width=1024&height=1024&nologo=true"
       }
     }, { status: 200 });
