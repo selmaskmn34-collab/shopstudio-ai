@@ -41,6 +41,7 @@ export async function POST(req: Request) {
     const words = cleanPrompt.toLowerCase().split(/\s+/).filter(w => w.length > 2);
     const tags = Array.from(new Set([...words, "sokakstili", "moda", "trend", "tasarim", "giyim", "kombin"])).slice(0, 7);
 
+    // TypeScript ES versiyon hatası vermeyen, "s" bayraksız güvenli AI okuma:
     try {
       const aiPrompt = encodeURIComponent(`E-ticaret için "${cleanPrompt}" ürününe profesyonel Türkçe SEO başlığı ve 2 cümlelik çekici bir açıklama yaz. Format: Başlık: [başlık] Açıklama: [açıklama]`);
       const aiRes = await fetch(`https://text.pollinations.ai/${aiPrompt}`, {
@@ -51,11 +52,12 @@ export async function POST(req: Request) {
       if (aiRes.ok) {
         const aiText = await aiRes.text();
         if (aiText && aiText.length > 20 && !aiText.includes("Error") && !aiText.includes("üretilemedi")) {
-          const descMatch = aiText.match(/Açıklama:\s*(.*?)(?:Etiketler:|$)/is);
+          // "s" bayrağı yerine [\s\S]* kullanarak tüm TypeScript versiyonlarıyla %100 uyumlu yaptık:
+          const descMatch = aiText.match(/Açıklama:\s*([\s\S]*?)(?:Etiketler:|$)/i);
           if (descMatch && descMatch[1]) {
             description = descMatch[1].replace(/["*]/g, '').trim();
           }
-          const titleMatch = aiText.match(/Başlık:\s*(.*?)(?:Açıklama:|$)/is);
+          const titleMatch = aiText.match(/Başlık:\s*([\s\S]*?)(?:Açıklama:|$)/i);
           if (titleMatch && titleMatch[1]) {
             title = titleMatch[1].replace(/["*]/g, '').trim();
           }
